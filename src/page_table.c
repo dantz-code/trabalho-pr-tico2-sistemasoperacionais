@@ -38,22 +38,27 @@ void page_table_update(int page, int frame)
 
 void page_table_invalidate(int page)
 {
-    /*
-     * TODO:
-     * Invalidar a entrada da página.
-     */
+    if (page < 0 || page >= PAGE_TABLE_SIZE)
+    {
+        return;
+    }
 
-    (void)page;
+    page_table[page].frame = -1;
+    page_table[page].valid = 0;
+    page_table[page].reference_bit = 0;
+    page_table[page].aging_counter = 0;
 }
 
 void page_table_set_reference(int page)
 {
-    /*
-     * TODO:
-     * Marcar o bit de referência da página como 1.
-     */
-
-    (void)page;
+    if (page < 0 || page >= PAGE_TABLE_SIZE)
+    {
+        return;
+    }
+    if (page_table[page].valid == 1)
+    {
+        page_table[page].reference_bit = 1;
+    }
 }
 
 void page_table_update_aging(void)
@@ -78,6 +83,17 @@ void page_table_update_aging(void)
      *     aging_counter |= 0x80;
      * reference_bit = 0;
      */
+
+    for (int i = 0; i < PAGE_TABLE_SIZE; i++)
+    {
+        if (page_table[i].valid == 1)
+        {
+            page_table[i].aging_counter >>= 1;
+            if (page_table[i].reference_bit == 1)
+                page_table[i].aging_counter |= 0x80;
+            page_table[i].reference_bit = 0;
+        }
+    }
 }
 
 int page_table_get_frame(int page)
