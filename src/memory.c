@@ -20,10 +20,12 @@ void memory_init(FILE *backing_store)
 {
     backing = backing_store;
 
-    for (int i = 0; i < NUM_FRAMES; i++) {
+    for (int i = 0; i < NUM_FRAMES; i++)
+    {
         frame_to_page[i] = -1;
 
-        for (int j = 0; j < FRAME_SIZE; j++) {
+        for (int j = 0; j < FRAME_SIZE; j++)
+        {
             physical_memory[i][j] = 0;
         }
     }
@@ -31,8 +33,10 @@ void memory_init(FILE *backing_store)
 
 static int find_free_frame(void)
 {
-    for (int i = 0; i < NUM_FRAMES; i++) {
-        if (frame_to_page[i] == -1) {
+    for (int i = 0; i < NUM_FRAMES; i++)
+    {
+        if (frame_to_page[i] == -1)
+        {
             return i;
         }
     }
@@ -56,7 +60,8 @@ int handle_page_fault(int page)
 
     int frame = find_free_frame();
 
-    if (frame == -1) {
+    if (frame == -1)
+    {
         int victim_page = select_victim_page();
 
         /*
@@ -65,7 +70,7 @@ int handle_page_fault(int page)
          * Invalidar tabela e TLB.
          */
 
-        (void) victim_page;
+        (void)victim_page;
 
         frame = 0;
     }
@@ -76,12 +81,13 @@ int handle_page_fault(int page)
      * Fazer fread de PAGE_SIZE bytes para physical_memory[frame].
      */
 
-    if (backing == NULL) {
+    if (backing == NULL)
+    {
         fprintf(stderr, "Erro interno: BACKING_STORE nao inicializado.\n");
         exit(1);
     }
 
-    (void) page;
+    (void)page;
 
     return frame;
 }
@@ -93,25 +99,51 @@ int select_victim_page(void)
      * Selecionar a página válida com menor aging_counter.
      * Em caso de empate, qualquer critério consistente pode ser usado.
      */
+    int victim_page = -1;
+    unsigned char smallest_counter = 255;
+
+    for (int i = 0; i < PAGE_TABLE_SIZE; i++)
+    {
+        if (page_table_is_valid(i))
+        {
+            unsigned char counter = page_table_get_aging_counter(i);
+
+            if (victim_page == -1)
+            {
+                victim_page = i;
+                smallest_counter = counter;
+            }
+            else if (counter < smallest_counter)
+            {
+                victim_page = i;
+                smallest_counter = counter;
+            }
+        }
+        return victim_page;
+    }
 
     return 0;
 }
 
 signed char read_memory(int frame, int offset)
 {
-    /*
-     * TODO:
-     * Retornar o byte armazenado em physical_memory[frame][offset].
-     */
+    if (frame < 0 || frame >= NUM_FRAMES)
+    {
+        return 0;
+    }
 
-    (void) frame;
-    (void) offset;
-    return 0;
+    if (offset < 0 || offset >= FRAME_SIZE)
+    {
+        return 0;
+    }
+
+    return physical_memory[frame][offset];
 }
 
 int get_page_loaded_in_frame(int frame)
 {
-    if (frame < 0 || frame >= NUM_FRAMES) {
+    if (frame < 0 || frame >= NUM_FRAMES)
+    {
         return -1;
     }
 
